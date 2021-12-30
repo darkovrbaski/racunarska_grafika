@@ -9,6 +9,7 @@ using System;
 using Assimp;
 using System.IO;
 using System.Reflection;
+using System.Windows.Threading;
 using SharpGL.SceneGraph;
 using SharpGL.SceneGraph.Primitives;
 using SharpGL.SceneGraph.Quadrics;
@@ -62,6 +63,24 @@ namespace AssimpSample
         private int m_height;
 
         private float m_diskRotationX = 0;
+
+        private DispatcherTimer timer1;
+
+        private DispatcherTimer timer2;
+
+        private DispatcherTimer timer3;
+
+        private DispatcherTimer timer4;
+
+        private float m_cdTranslationZ = 0;
+
+        private float m_diskTranslationZ = 480;
+
+        private float m_diskRotationSpeed = 60;
+
+        private double m_diskTranslationY = 115f;
+
+        public bool LockControls { get; set; }
 
         #endregion Atributi
 
@@ -176,6 +195,7 @@ namespace AssimpSample
             m_sceneComputer.Initialize();
             m_sceneCD.LoadScene();
             m_sceneCD.Initialize();
+            InitializeAnimation();
         }
 
         /// <summary>
@@ -216,21 +236,22 @@ namespace AssimpSample
         {
             gl.PushMatrix();
             m_sceneComputer.Draw();
-            DrawCD(gl);
+            DrawCd(gl);
             gl.PopMatrix();
             gl.Flush();
         }
 
-        private void DrawCD(OpenGL gl)
+        private void DrawCd(OpenGL gl)
         {
             gl.PushMatrix();
-            //gl.Translate(0.0f, 0.0f, 210f);
+            // cd izvucen 0.0f, 0.0f, 210f
+            gl.Translate(0.0f, 0.0f, m_cdTranslationZ);
             m_sceneCD.Draw();
             gl.PopMatrix();
             gl.Flush();
         }
 
-        public void DrawDesk(OpenGL gl)
+        private void DrawDesk(OpenGL gl)
         {
             gl.PushMatrix();
             gl.Translate(0f, -320, 300f);
@@ -256,13 +277,12 @@ namespace AssimpSample
             gl.Flush();
         }
 
-        public void DrawDisk(OpenGL gl)
+        private void DrawDisk(OpenGL gl)
         {
             gl.PushMatrix();
             // disk u citacu -480f, 115f, 480f
-            gl.Translate(-480f, 115f, 880f);
-            gl.Rotate(0f, 0f, 0f);
-            gl.Rotate(m_diskRotationX, 0f, m_diskRotationX);
+            gl.Translate(-480f, m_diskTranslationY, m_diskTranslationZ);
+            gl.Rotate(0f, m_diskRotationX, 0f);
             gl.Scale(50f, 50f, 50f);
             gl.Rotate(90f, 0f, 0f);
             gl.Color(1f, 1f, 1f);
@@ -272,17 +292,15 @@ namespace AssimpSample
             disk.InnerRadius = 0.3f;
             disk.OuterRadius = 1.5f;
             disk.CreateInContext(gl);
-            //gl.Disable(OpenGL.GL_CULL_FACE);
             disk.Render(gl, RenderMode.Render);
-            //gl.Enable(OpenGL.GL_CULL_FACE);
             gl.Rotate(180f, 0f, 0f);
             disk.Render(gl, RenderMode.Render);
             gl.PopMatrix();
-            m_diskRotationX++;
+            m_diskRotationX += m_diskRotationSpeed;
             gl.Flush();
         }
 
-        public void DrawSurface(OpenGL gl)
+        private void DrawSurface(OpenGL gl)
         {
             gl.PushMatrix();
             gl.Rotate(90f, 0f, 0f);
@@ -316,6 +334,83 @@ namespace AssimpSample
             gl.PopMatrix();
             gl.Viewport(0, 0, m_width, m_height);
             gl.Flush();
+        }
+
+        private void InitializeAnimation()
+        {
+            timer1 = new DispatcherTimer();
+            timer1.Interval = TimeSpan.FromMilliseconds(50);
+            timer1.Tick += CdOpenAnimation;
+            
+            timer2 = new DispatcherTimer();
+            timer2.Interval = TimeSpan.FromMilliseconds(120);
+            timer2.Tick += DiskStopRotationAnimation;
+
+            timer3 = new DispatcherTimer();
+            timer3.Interval = TimeSpan.FromMilliseconds(20);
+            timer3.Tick += PopDiskAnimation;
+
+            timer4 = new DispatcherTimer();
+            timer4.Interval = TimeSpan.FromMilliseconds(35);
+            timer4.Tick += CdCloseAnimation;
+        }
+        
+        private void CdCloseAnimation(object sender, EventArgs e)
+        {
+            m_cdTranslationZ -= 10;
+            if (m_cdTranslationZ == 0)
+            {
+                timer4.Stop();
+                LockControls = false;
+            }
+        }
+
+        private void PopDiskAnimation(object sender, EventArgs e)
+        {
+            m_diskTranslationY += 5;
+            if (m_diskTranslationY >= 145)
+            {
+                timer3.Stop();
+                timer4.Start();
+            }
+        }
+
+        private void DiskStopRotationAnimation(object sender, EventArgs e)
+        {
+            m_diskRotationSpeed -= 1f;
+            if (m_diskRotationSpeed == 0f)
+            {
+                timer2.Stop();
+                timer3.Start();
+            }
+        }
+
+        private void CdOpenAnimation(object sender, EventArgs e)
+        {
+            m_cdTranslationZ += 10f;
+            m_diskTranslationZ += 10f;
+            if (m_cdTranslationZ >= 210f)
+            {
+                timer1.Stop();
+            }
+        }
+
+        public void StartAnimation()
+        {
+            LockControls = true;
+            m_sceneDistance = 1700f;
+            m_xRotation = 30;
+            m_yRotation = 30;
+            m_cdTranslationZ = 0;
+            m_diskTranslationZ = 480f;
+            m_diskRotationSpeed = 60f;
+            m_diskTranslationY = 115f;
+
+            timer3.Stop();
+            timer4.Stop();
+
+            timer1.Start();
+            timer2.Start();
         }
 
         /// <summary>
