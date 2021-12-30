@@ -103,6 +103,18 @@ namespace AssimpSample
                 case Key.D:
                     if (!m_world.LockControls) m_world.RotationY += 5.0f;
                     break;
+                case Key.Up:
+                    if (!m_world.LockControls && m_world.ComputerZ - 20f > -220f) m_world.ComputerZ -= 20f;
+                    break;                                          
+                case Key.Down:                                      
+                    if (!m_world.LockControls && m_world.ComputerZ + 20f < 240f) m_world.ComputerZ += 20f;
+                    break;                                          
+                case Key.Left:
+                    if (!m_world.LockControls && m_world.ComputerX - 20f > -260f) m_world.ComputerX -= 20f;
+                    break;                                          
+                case Key.Right:                                     
+                    if (!m_world.LockControls && m_world.ComputerX + 20f < 260f) m_world.ComputerX += 20f;
+                    break;
                 case Key.Add:
                     if (!m_world.LockControls) m_world.SceneDistance -= 700.0f;
                     break;

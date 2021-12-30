@@ -62,7 +62,7 @@ namespace AssimpSample
         /// </summary>
         private int m_height;
 
-        private float m_diskRotationX = 0;
+        private float m_diskRotationX = 0f;
 
         private DispatcherTimer timer1;
 
@@ -72,15 +72,17 @@ namespace AssimpSample
 
         private DispatcherTimer timer4;
 
-        private float m_cdTranslationZ = 0;
+        private float m_cdTranslationZ = 0f;
 
-        private float m_diskTranslationZ = 480;
+        private float m_diskTranslationZ = 480f;
 
-        private float m_diskRotationSpeed = 60;
+        private float m_diskRotationSpeed = 60f;
 
-        private double m_diskTranslationY = 115f;
+        private float m_diskTranslationY = 115f;
+        
+        private float m_computerX = 0f;
 
-        public bool LockControls { get; set; }
+        private float m_computerZ = 0f;
 
         #endregion Atributi
 
@@ -147,6 +149,20 @@ namespace AssimpSample
         {
             get { return m_height; }
             set { m_height = value; }
+        }
+
+        public bool LockControls { get; set; }
+
+        public float ComputerX
+        {
+            get { return m_computerX; }
+            set { m_computerX = value; }
+        }
+
+        public float ComputerZ
+        {
+            get { return m_computerZ; }
+            set { m_computerZ = value; }
         }
 
         #endregion Properties
@@ -223,9 +239,15 @@ namespace AssimpSample
             gl.Translate(0.0f, 300.0f, -m_sceneDistance);
             gl.Rotate(m_xRotation, 1.0f, 0.0f, 0.0f);
             gl.Rotate(m_yRotation, 0.0f, 1.0f, 0.0f);
+            gl.PushMatrix();
+            gl.Translate(0.0f, 0.0f, 0.0f);
+            gl.PushMatrix();
+            gl.Translate(m_computerX, 0.0f, m_computerZ);
             DrawComputer(gl);
             DrawDisk(gl);
+            gl.PopMatrix();
             DrawDesk(gl);
+            gl.PopMatrix();
             DrawSurface(gl);
             DrawText(gl);
             gl.PopMatrix();
