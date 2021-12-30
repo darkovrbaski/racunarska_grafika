@@ -1,1 +1,1 @@
-# racunaska_grafika
+# racunarska_grafika
