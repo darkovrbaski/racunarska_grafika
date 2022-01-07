@@ -200,18 +200,64 @@ namespace AssimpSample
         public void Initialize(OpenGL gl)
         {
             gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            gl.Color(1f, 0f, 0f);
-            // Model sencenja na flat (konstantno)
             gl.Enable(OpenGL.GL_DEPTH_TEST);
             gl.Enable(OpenGL.GL_CULL_FACE);
             gl.CullFace(OpenGL.GL_BACK);
             gl.FrontFace(OpenGL.GL_CCW);
-            gl.ShadeModel(OpenGL.GL_FLAT);
+            gl.ShadeModel(OpenGL.GL_SMOOTH);
             m_sceneComputer.LoadScene();
             m_sceneComputer.Initialize();
             m_sceneCD.LoadScene();
             m_sceneCD.Initialize();
+            SetupLighting(gl);
             InitializeAnimation();
+        }
+
+        /// <summary>
+        /// Podesavanje osvetljenja
+        /// </summary>
+        private void SetupLighting(OpenGL gl)
+        {
+            float[] global_ambient = { 0.3f, 0.3f, 0.3f, 1.0f };
+            gl.LightModel(OpenGL.GL_LIGHT_MODEL_AMBIENT, global_ambient);
+
+            WhitePointLightSetup(gl);
+            RedSpotLightSetup(gl);
+
+            gl.Enable(OpenGL.GL_LIGHTING);
+            gl.Enable(OpenGL.GL_LIGHT0);
+            gl.Enable(OpenGL.GL_LIGHT1);
+
+            gl.ColorMaterial(OpenGL.GL_FRONT, OpenGL.GL_AMBIENT_AND_DIFFUSE);
+            gl.Enable(OpenGL.GL_COLOR_MATERIAL);
+
+            gl.Enable(OpenGL.GL_NORMALIZE);
+        }
+
+        private void WhitePointLightSetup(OpenGL gl)
+        {
+            float[] light0ambient = { 0.4f, 0.4f, 0.4f, 1.0f };
+            float[] light0diffuse = { 0.3f, 0.3f, 0.3f, 1.0f };
+            float[] light0specular ={ 0.8f, 0.8f, 0.8f, 1.0f };
+
+            gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_AMBIENT, light0ambient);
+            gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_DIFFUSE, light0diffuse);
+            gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_SPECULAR, light0specular);
+            gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_SPOT_CUTOFF, 180.0f);
+        }
+
+        private void RedSpotLightSetup(OpenGL gl)
+        {
+            float[] light1ambient = { 0.4f, 0.0f, 0.0f, 1.0f };
+            float[] light1diffuse = { 0.3f, 0.0f, 0.0f, 1.0f };
+            float[] light1specular = { 0.8f, 0.0f, 0.0f, 1.0f };
+            float[] light1direction = { 0.0f, -1.0f, 0.0f };
+
+            gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_AMBIENT, light1ambient);
+            gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_DIFFUSE, light1diffuse);
+            gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_SPECULAR, light1specular);
+            gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_SPOT_DIRECTION, light1direction);
+            gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_SPOT_CUTOFF, 30.0f);
         }
 
         /// <summary>
@@ -222,11 +268,12 @@ namespace AssimpSample
             m_width = width;
             m_height = height;
             gl.Viewport(0, 0, m_width, m_height);
-            gl.MatrixMode(OpenGL.GL_PROJECTION);      // selektuj Projection Matrix
+            gl.MatrixMode(OpenGL.GL_PROJECTION); // selektuj Projection Matrix
             gl.LoadIdentity();
-            gl.Perspective(45f, (double)m_width / m_height, 1f, 20000f);
+            gl.Perspective(45f, (double) m_width / m_height, 1f, 20000f);
+            gl.LookAt(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -m_sceneDistance - 1, 0.0f, 1.0f, 0.0f);
             gl.MatrixMode(OpenGL.GL_MODELVIEW);
-            gl.LoadIdentity();                // resetuj ModelView Matrix
+            gl.LoadIdentity(); // resetuj ModelView Matrix
         }
 
         /// <summary>
@@ -236,18 +283,29 @@ namespace AssimpSample
         {
             gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
             gl.PushMatrix();
-            gl.Translate(0.0f, 300.0f, -m_sceneDistance);
+            gl.Translate(0.0f, 200.0f, -m_sceneDistance);
             gl.Rotate(m_xRotation, 1.0f, 0.0f, 0.0f);
             gl.Rotate(m_yRotation, 0.0f, 1.0f, 0.0f);
+
+            float[] light0pos = { 0.0f, 2500.0f, 0.0f, 1.0f };
+            gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_POSITION, light0pos);
+
             gl.PushMatrix();
             gl.Translate(0.0f, 0.0f, 0.0f);
+            
             gl.PushMatrix();
             gl.Translate(m_computerX, 0.0f, m_computerZ);
+
+            float[] light1pos = { -350.0f, 1400.0f, 0.0f, 1.0f };
+            gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_POSITION, light1pos);
+
             DrawComputer(gl);
             DrawDisk(gl);
             gl.PopMatrix();
+            
             DrawDesk(gl);
             gl.PopMatrix();
+            
             DrawSurface(gl);
             DrawText(gl);
             gl.PopMatrix();
@@ -328,6 +386,7 @@ namespace AssimpSample
             gl.Rotate(90f, 0f, 0f);
             gl.Translate(0f, 0f, 880f);
             gl.Begin(OpenGL.GL_QUADS);
+            gl.Normal(0.0f, 1.0f, 0.0f);
             gl.Color(0.4f,0f,0f);
             gl.Vertex(2000f, -2000f);
             gl.Vertex(-2000f, -2000f);

@@ -92,7 +92,7 @@ namespace AssimpSample
                     Close();
                     break;
                 case Key.W:
-                    if (!m_world.LockControls && m_world.RotationX - 5.0f >= -5.0f) m_world.RotationX -= 5.0f;
+                    if (!m_world.LockControls && m_world.RotationX - 5.0f >= 0f) m_world.RotationX -= 5.0f;
                     break;
                 case Key.S:
                     if (!m_world.LockControls && m_world.RotationX + 5.0f <= 90.0f) m_world.RotationX += 5.0f;
@@ -105,14 +105,14 @@ namespace AssimpSample
                     break;
                 case Key.Up:
                     if (!m_world.LockControls && m_world.ComputerZ - 20f > -220f) m_world.ComputerZ -= 20f;
-                    break;                                          
-                case Key.Down:                                      
+                    break;
+                case Key.Down:
                     if (!m_world.LockControls && m_world.ComputerZ + 20f < 240f) m_world.ComputerZ += 20f;
-                    break;                                          
+                    break;
                 case Key.Left:
                     if (!m_world.LockControls && m_world.ComputerX - 20f > -260f) m_world.ComputerX -= 20f;
-                    break;                                          
-                case Key.Right:                                     
+                    break;
+                case Key.Right:
                     if (!m_world.LockControls && m_world.ComputerX + 20f < 260f) m_world.ComputerX += 20f;
                     break;
                 case Key.Add:
@@ -122,10 +122,7 @@ namespace AssimpSample
                     if (!m_world.LockControls) m_world.SceneDistance += 700.0f;
                     break;
                 case Key.C:
-                    if (!m_world.LockControls)
-                    {
-                        m_world.StartAnimation();
-                    }
+                    if (!m_world.LockControls) m_world.StartAnimation();
                     break;
             }
         }
