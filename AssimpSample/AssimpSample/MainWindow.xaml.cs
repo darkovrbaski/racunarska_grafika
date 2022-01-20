@@ -104,16 +104,30 @@ namespace AssimpSample
                     if (!m_world.LockControls) m_world.RotationY += 5.0f;
                     break;
                 case Key.Up:
-                    if (!m_world.LockControls && m_world.ComputerZ - 20f > -220f) m_world.ComputerZ -= 20f;
+                    float computerNegativeZ = 5f;
+                    float diffNegativeZ = computerNegativeZ * m_world.ComputerScalingFactor / 2 - computerNegativeZ / 2;
+                    if (!m_world.LockControls && m_world.ComputerZ - 20f > -200f + diffNegativeZ) m_world.ComputerZ -= 20f;
                     break;
                 case Key.Down:
-                    if (!m_world.LockControls && m_world.ComputerZ + 20f < 240f) m_world.ComputerZ += 20f;
+                    float computerPositiveZ = 1100f;
+                    float diffPositiveZ = computerPositiveZ * m_world.ComputerScalingFactor / 2 - computerPositiveZ / 2;
+                    if (!m_world.LockControls && m_world.ComputerZ + 20f < 220f - diffPositiveZ) m_world.ComputerZ += 20f;
                     break;
                 case Key.Left:
-                    if (!m_world.LockControls && m_world.ComputerX - 20f > -260f) m_world.ComputerX -= 20f;
+                    float computerNegativeX = 1200f;
+                    float diffNegativeX = computerNegativeX * m_world.ComputerScalingFactor / 2 - computerNegativeX / 2;
+                    if (!m_world.LockControls && m_world.ComputerX - 20f > -260f + diffNegativeX) m_world.ComputerX -= 20f;
                     break;
                 case Key.Right:
-                    if (!m_world.LockControls && m_world.ComputerX + 20f < 260f) m_world.ComputerX += 20f;
+                    float computerPositiveX = 1200f;
+                    float diffPositiveX = computerPositiveX * m_world.ComputerScalingFactor / 2 - computerPositiveX / 2;
+                    if (!m_world.LockControls && m_world.ComputerX + 20f < 260f - diffPositiveX) m_world.ComputerX += 20f;
+                    break;
+                case Key.PageUp:
+                    if (!m_world.LockControls && m_world.ComputerScalingFactor + 0.05f < 1.3f) m_world.ComputerScalingFactor += 0.05f;
+                    break;
+                case Key.PageDown:
+                    if (!m_world.LockControls && m_world.ComputerScalingFactor - 0.05f > 0.0f) m_world.ComputerScalingFactor -= 0.05f;
                     break;
                 case Key.Add:
                     if (!m_world.LockControls) m_world.SceneDistance -= 700.0f;

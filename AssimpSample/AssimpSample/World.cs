@@ -6,15 +6,13 @@
 // <summary>Klasa koja enkapsulira OpenGL programski kod.</summary>
 // -----------------------------------------------------------------------
 using System;
-using Assimp;
-using System.IO;
-using System.Reflection;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Threading;
-using SharpGL.SceneGraph;
+using SharpGL;
+using SharpGL.SceneGraph.Core;
 using SharpGL.SceneGraph.Primitives;
 using SharpGL.SceneGraph.Quadrics;
-using SharpGL.SceneGraph.Core;
-using SharpGL;
 
 namespace AssimpSample
 {
@@ -62,7 +60,22 @@ namespace AssimpSample
         /// </summary>
         private int m_height;
 
-        private float m_diskRotationX = 0f;
+        /// <summary>
+        ///	 Identifikatori tekstura za bolju citljivost.
+        /// </summary>
+        private enum TextureObjects { Back = 0, Front, Bottom, Top, Left, Right };
+
+        /// <summary>
+        ///	 Identifikatori OpenGL tekstura
+        /// </summary>
+        private uint[] m_textures = null;
+
+        /// <summary>
+        ///	 Broj tekstura.
+        /// </summary>
+        private readonly int m_textureCount = Enum.GetNames(typeof(TextureObjects)).Length;
+
+        private float m_diskRotationY = 0.0f;
 
         private DispatcherTimer timer1;
 
@@ -72,17 +85,19 @@ namespace AssimpSample
 
         private DispatcherTimer timer4;
 
-        private float m_cdTranslationZ = 0f;
+        private float m_cdTranslationZ = 0.0f;
 
-        private float m_diskTranslationZ = 480f;
+        private float m_diskTranslationZ = 480.0f;
 
-        private float m_diskRotationSpeed = 60f;
+        private float m_diskRotationSpeed = 60.0f;
 
-        private float m_diskTranslationY = 115f;
-        
-        private float m_computerX = 0f;
+        private float m_diskTranslationY = 115.0f;
 
-        private float m_computerZ = 0f;
+        private float m_computerX = 0.0f;
+
+        private float m_computerZ = 0.0f;
+
+        private float m_computerScalingFactor = 1.0f;
 
         #endregion Atributi
 
@@ -165,6 +180,12 @@ namespace AssimpSample
             set { m_computerZ = value; }
         }
 
+        public float ComputerScalingFactor
+        {
+            get { return m_computerScalingFactor; }
+            set { m_computerScalingFactor = value; }
+        }
+
         #endregion Properties
 
         #region Konstruktori
@@ -180,6 +201,7 @@ namespace AssimpSample
             this.m_sceneCD = new AssimpScene(scenePath, sceneFileName, gl);
             this.m_width = width;
             this.m_height = height;
+            m_textures = new uint[m_textureCount];
         }
 
         /// <summary>
@@ -211,6 +233,44 @@ namespace AssimpSample
             m_sceneCD.Initialize();
             SetupLighting(gl);
             InitializeAnimation();
+            //CreateTextures(gl);
+        }
+
+        /// <summary>
+        ///  Kreiranje teksture.
+        /// </summary>
+        private void CreateTextures(OpenGL gl)
+        {
+            string[] textureFiles = {  "..//..//images//back.jpg",
+                                       "..//..//images//front.jpg",
+                                       "..//..//images//bottom.jpg",
+                                       "..//..//images//top.jpg",
+                                       "..//..//images//left.jpg",
+                                       "..//..//images//right.jpg" };
+
+            gl.Enable(OpenGL.GL_TEXTURE_2D);
+            gl.GenTextures(m_textureCount, m_textures);
+            gl.TexEnv(OpenGL.GL_TEXTURE_ENV, OpenGL.GL_TEXTURE_ENV_MODE, OpenGL.GL_MODULATE);
+
+            for (int textureID = 0; textureID < m_textures.Length; textureID++)
+            {
+                Bitmap image = new Bitmap(textureFiles[textureID]);
+                image.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
+                BitmapData bitmapdata = image.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+                gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)textureID]);
+
+                gl.Build2DMipmaps(OpenGL.GL_TEXTURE_2D, OpenGL.GL_RGBA8, image.Width, image.Height, OpenGL.GL_BGRA, OpenGL.GL_UNSIGNED_BYTE, bitmapdata.Scan0);
+
+                gl.TexParameter(OpenGL.GL_TEXTURE_2D, OpenGL.GL_TEXTURE_MAG_FILTER, OpenGL.GL_NEAREST);
+                gl.TexParameter(OpenGL.GL_TEXTURE_2D, OpenGL.GL_TEXTURE_MIN_FILTER, OpenGL.GL_NEAREST);
+                gl.TexParameter(OpenGL.GL_TEXTURE_2D, OpenGL.GL_TEXTURE_WRAP_S, OpenGL.GL_REPEAT);
+                gl.TexParameter(OpenGL.GL_TEXTURE_2D, OpenGL.GL_TEXTURE_WRAP_T, OpenGL.GL_REPEAT);
+
+                image.UnlockBits(bitmapdata);
+                image.Dispose();
+            }
         }
 
         /// <summary>
@@ -222,7 +282,7 @@ namespace AssimpSample
             gl.LightModel(OpenGL.GL_LIGHT_MODEL_AMBIENT, global_ambient);
 
             WhitePointLightSetup(gl);
-            RedSpotLightSetup(gl);
+            RedSpotlightSetup(gl);
 
             gl.Enable(OpenGL.GL_LIGHTING);
             gl.Enable(OpenGL.GL_LIGHT0);
@@ -238,7 +298,7 @@ namespace AssimpSample
         {
             float[] light0ambient = { 0.4f, 0.4f, 0.4f, 1.0f };
             float[] light0diffuse = { 0.3f, 0.3f, 0.3f, 1.0f };
-            float[] light0specular ={ 0.8f, 0.8f, 0.8f, 1.0f };
+            float[] light0specular = { 0.8f, 0.8f, 0.8f, 1.0f };
 
             gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_AMBIENT, light0ambient);
             gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_DIFFUSE, light0diffuse);
@@ -246,7 +306,7 @@ namespace AssimpSample
             gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_SPOT_CUTOFF, 180.0f);
         }
 
-        private void RedSpotLightSetup(OpenGL gl)
+        private void RedSpotlightSetup(OpenGL gl)
         {
             float[] light1ambient = { 0.4f, 0.0f, 0.0f, 1.0f };
             float[] light1diffuse = { 0.3f, 0.0f, 0.0f, 1.0f };
@@ -270,7 +330,7 @@ namespace AssimpSample
             gl.Viewport(0, 0, m_width, m_height);
             gl.MatrixMode(OpenGL.GL_PROJECTION); // selektuj Projection Matrix
             gl.LoadIdentity();
-            gl.Perspective(45f, (double) m_width / m_height, 1f, 20000f);
+            gl.Perspective(45f, (double)m_width / m_height, 1f, 20000f);
             gl.LookAt(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -m_sceneDistance - 1, 0.0f, 1.0f, 0.0f);
             gl.MatrixMode(OpenGL.GL_MODELVIEW);
             gl.LoadIdentity(); // resetuj ModelView Matrix
@@ -282,6 +342,7 @@ namespace AssimpSample
         public void Draw(OpenGL gl)
         {
             gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+            gl.Color(1.0f, 1.0f, 1.0f);
             gl.PushMatrix();
             gl.Translate(0.0f, 200.0f, -m_sceneDistance);
             gl.Rotate(m_xRotation, 1.0f, 0.0f, 0.0f);
@@ -292,9 +353,10 @@ namespace AssimpSample
 
             gl.PushMatrix();
             gl.Translate(0.0f, 0.0f, 0.0f);
-            
             gl.PushMatrix();
-            gl.Translate(m_computerX, 0.0f, m_computerZ);
+            float computerHeight = 575.0f;
+            gl.Translate(m_computerX, computerHeight * m_computerScalingFactor / 2 - computerHeight / 2, m_computerZ);
+            gl.Scale(m_computerScalingFactor, m_computerScalingFactor, m_computerScalingFactor);
 
             float[] light1pos = { -350.0f, 1400.0f, 0.0f, 1.0f };
             gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_POSITION, light1pos);
@@ -302,11 +364,12 @@ namespace AssimpSample
             DrawComputer(gl);
             DrawDisk(gl);
             gl.PopMatrix();
-            
+
             DrawDesk(gl);
             gl.PopMatrix();
-            
+            gl.TexEnv(OpenGL.GL_TEXTURE_ENV, OpenGL.GL_TEXTURE_ENV_MODE, OpenGL.GL_ADD);
             DrawSurface(gl);
+            gl.TexEnv(OpenGL.GL_TEXTURE_ENV, OpenGL.GL_TEXTURE_ENV_MODE, OpenGL.GL_MODULATE);
             DrawText(gl);
             gl.PopMatrix();
             gl.Flush();
@@ -362,7 +425,7 @@ namespace AssimpSample
             gl.PushMatrix();
             // disk u citacu -480f, 115f, 480f
             gl.Translate(-480f, m_diskTranslationY, m_diskTranslationZ);
-            gl.Rotate(0f, m_diskRotationX, 0f);
+            gl.Rotate(0f, m_diskRotationY, 0f);
             gl.Scale(50f, 50f, 50f);
             gl.Rotate(90f, 0f, 0f);
             gl.Color(1f, 1f, 1f);
@@ -376,7 +439,7 @@ namespace AssimpSample
             gl.Rotate(180f, 0f, 0f);
             disk.Render(gl, RenderMode.Render);
             gl.PopMatrix();
-            m_diskRotationX += m_diskRotationSpeed;
+            m_diskRotationY += m_diskRotationSpeed;
             gl.Flush();
         }
 
@@ -387,7 +450,7 @@ namespace AssimpSample
             gl.Translate(0f, 0f, 880f);
             gl.Begin(OpenGL.GL_QUADS);
             gl.Normal(0.0f, 1.0f, 0.0f);
-            gl.Color(0.4f,0f,0f);
+            gl.Color(0.4f, 0f, 0f);
             gl.Vertex(2000f, -2000f);
             gl.Vertex(-2000f, -2000f);
             gl.Vertex(-2000f, 2000f);
@@ -422,7 +485,7 @@ namespace AssimpSample
             timer1 = new DispatcherTimer();
             timer1.Interval = TimeSpan.FromMilliseconds(50);
             timer1.Tick += CdOpenAnimation;
-            
+
             timer2 = new DispatcherTimer();
             timer2.Interval = TimeSpan.FromMilliseconds(120);
             timer2.Tick += DiskStopRotationAnimation;
@@ -435,7 +498,7 @@ namespace AssimpSample
             timer4.Interval = TimeSpan.FromMilliseconds(35);
             timer4.Tick += CdCloseAnimation;
         }
-        
+
         private void CdCloseAnimation(object sender, EventArgs e)
         {
             m_cdTranslationZ -= 10;
