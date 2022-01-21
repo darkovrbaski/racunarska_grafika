@@ -133,7 +133,16 @@
     <None Include="Dependencies\SharpGL.WPF.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="3D Models\CD-ROM\Plastic_Rough_001_basecolor.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="3D Models\Computer\2914960599_2048x2048_6195987693227547908.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="3D Models\Computer\Gun_Metal_Scratched_001_COLOR.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="3D Models\Computer\Plastic_Rough_001_basecolor.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Textures\carpet.jpg">
