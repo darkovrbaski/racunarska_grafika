@@ -8,6 +8,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Windows.Threading;
 using SharpGL;
 using SharpGL.SceneGraph.Core;
@@ -61,20 +62,37 @@ namespace AssimpSample
         private int m_height;
 
         /// <summary>
-        ///	 Identifikatori tekstura za bolju citljivost.
+        ///	 Identifikatori tekstura za jednostavniji pristup teksturama
         /// </summary>
-        private enum TextureObjects { Back = 0, Front, Bottom, Top, Left, Right };
-
-        /// <summary>
-        ///	 Identifikatori OpenGL tekstura
-        /// </summary>
-        private uint[] m_textures = null;
+        private enum TextureObjects { Back = 0, Front, Bottom, Top, Left, Right, Carpet, Wood, CDFRONT, CDBACK };
 
         /// <summary>
         ///	 Broj tekstura.
         /// </summary>
         private readonly int m_textureCount = Enum.GetNames(typeof(TextureObjects)).Length;
 
+        /// <summary>
+        ///	 Identifikatori OpenGL tekstura
+        /// </summary>
+        private uint[] m_textures = null;
+        
+        /// <summary>
+        ///	 Putanje do slika koje se koriste za teksture
+        /// </summary>
+        private string[] m_textureFiles =
+        {
+            "..//..//Textures//Sky-box//desertbk.png",
+            "..//..//Textures//Sky-box//desertft.png",
+            "..//..//Textures//Sky-box//desertdn.png",
+            "..//..//Textures//Sky-box//desertup.png",
+            "..//..//Textures//Sky-box//desertlf.png",
+            "..//..//Textures//Sky-box//desertrt.png",
+            "..//..//Textures//carpet.jpg",
+            "..//..//Textures//wood.jpg",
+            "..//..//Textures//cdft.jpg",
+            "..//..//Textures//cdbk.jpg"
+        };
+        
         private float m_diskRotationY = 0.0f;
 
         private DispatcherTimer timer1;
@@ -193,12 +211,12 @@ namespace AssimpSample
         /// <summary>
         ///  Konstruktor klase World.
         /// </summary>
-        public World(String scenePath, String sceneFileName, int width, int height, OpenGL gl)
+        public World(string scenePath, int width, int height, OpenGL gl)
         {
-            sceneFileName = "Computer.obj";
-            this.m_sceneComputer = new AssimpScene(scenePath, sceneFileName, gl);
+            string sceneFileName = "Computer.obj";
+            this.m_sceneComputer = new AssimpScene(Path.Combine(scenePath + "Computer\\"), sceneFileName, gl);
             sceneFileName = "CD.obj";
-            this.m_sceneCD = new AssimpScene(scenePath, sceneFileName, gl);
+            this.m_sceneCD = new AssimpScene(Path.Combine(scenePath + "CD-ROM\\"), sceneFileName, gl);
             this.m_width = width;
             this.m_height = height;
             m_textures = new uint[m_textureCount];
@@ -233,7 +251,7 @@ namespace AssimpSample
             m_sceneCD.Initialize();
             SetupLighting(gl);
             InitializeAnimation();
-            //CreateTextures(gl);
+            CreateTextures(gl);
         }
 
         /// <summary>
@@ -241,25 +259,18 @@ namespace AssimpSample
         /// </summary>
         private void CreateTextures(OpenGL gl)
         {
-            string[] textureFiles = {  "..//..//images//back.jpg",
-                                       "..//..//images//front.jpg",
-                                       "..//..//images//bottom.jpg",
-                                       "..//..//images//top.jpg",
-                                       "..//..//images//left.jpg",
-                                       "..//..//images//right.jpg" };
-
             gl.Enable(OpenGL.GL_TEXTURE_2D);
             gl.GenTextures(m_textureCount, m_textures);
             gl.TexEnv(OpenGL.GL_TEXTURE_ENV, OpenGL.GL_TEXTURE_ENV_MODE, OpenGL.GL_MODULATE);
 
-            for (int textureID = 0; textureID < m_textures.Length; textureID++)
+            for (int textureId = 0; textureId < m_textures.Length; textureId++)
             {
-                Bitmap image = new Bitmap(textureFiles[textureID]);
+                Bitmap image = new Bitmap(m_textureFiles[textureId]);
                 image.RotateFlip(RotateFlipType.RotateNoneFlipY);
                 Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
                 BitmapData bitmapdata = image.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 
-                gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)textureID]);
+                gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[textureId]);
 
                 gl.Build2DMipmaps(OpenGL.GL_TEXTURE_2D, OpenGL.GL_RGBA8, image.Width, image.Height, OpenGL.GL_BGRA, OpenGL.GL_UNSIGNED_BYTE, bitmapdata.Scan0);
 
@@ -331,7 +342,6 @@ namespace AssimpSample
             gl.MatrixMode(OpenGL.GL_PROJECTION); // selektuj Projection Matrix
             gl.LoadIdentity();
             gl.Perspective(45f, (double)m_width / m_height, 1f, 20000f);
-            gl.LookAt(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -m_sceneDistance - 1, 0.0f, 1.0f, 0.0f);
             gl.MatrixMode(OpenGL.GL_MODELVIEW);
             gl.LoadIdentity(); // resetuj ModelView Matrix
         }
@@ -342,17 +352,21 @@ namespace AssimpSample
         public void Draw(OpenGL gl)
         {
             gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
-            gl.Color(1.0f, 1.0f, 1.0f);
+            gl.Color(1.0f, 1.0f, 1.0f, 1.0f);
+            
             gl.PushMatrix();
             gl.Translate(0.0f, 200.0f, -m_sceneDistance);
             gl.Rotate(m_xRotation, 1.0f, 0.0f, 0.0f);
             gl.Rotate(m_yRotation, 0.0f, 1.0f, 0.0f);
-
+            
+            gl.LookAt(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
+            DrawEnvironment(gl, 0.0f, 0.0f, 0.0f, 6000.0f, 6000.0f, 6000.0f);
             float[] light0pos = { 0.0f, 2500.0f, 0.0f, 1.0f };
             gl.Light(OpenGL.GL_LIGHT0, OpenGL.GL_POSITION, light0pos);
 
             gl.PushMatrix();
             gl.Translate(0.0f, 0.0f, 0.0f);
+
             gl.PushMatrix();
             float computerHeight = 575.0f;
             gl.Translate(m_computerX, computerHeight * m_computerScalingFactor / 2 - computerHeight / 2, m_computerZ);
@@ -360,19 +374,104 @@ namespace AssimpSample
 
             float[] light1pos = { -350.0f, 1400.0f, 0.0f, 1.0f };
             gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_POSITION, light1pos);
-
             DrawComputer(gl);
             DrawDisk(gl);
             gl.PopMatrix();
 
             DrawDesk(gl);
             gl.PopMatrix();
+
             gl.TexEnv(OpenGL.GL_TEXTURE_ENV, OpenGL.GL_TEXTURE_ENV_MODE, OpenGL.GL_ADD);
             DrawSurface(gl);
             gl.TexEnv(OpenGL.GL_TEXTURE_ENV, OpenGL.GL_TEXTURE_ENV_MODE, OpenGL.GL_MODULATE);
             DrawText(gl);
             gl.PopMatrix();
             gl.Flush();
+        }
+
+        /// <summary>
+        ///  Iscrtavanje teksturiranog kvadra - okruzenja.
+        /// </summary>
+        private void DrawEnvironment(OpenGL gl, float x, float y, float z, float width, float height, float length)
+        {
+            // BACK teksturu pridruzi zadnjoj stranici kocke
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Back]);
+
+            // kocka je centrirana oko (x,y,z) tacke
+            x = x - width / 2;
+            y = y - height / 2;
+            z = z - length / 2;
+
+            // BACK stranica
+            gl.Begin(OpenGL.GL_QUADS);
+            gl.TexCoord(1.0f, 0.0f);
+            gl.Vertex(x + width, y, z);
+            gl.TexCoord(1.0f, 1.0f);
+            gl.Vertex(x + width, y + height, z);
+            gl.TexCoord(0.0f, 1.0f);
+            gl.Vertex(x, y + height, z);
+            gl.TexCoord(0.0f, 0.0f);
+            gl.Vertex(x, y, z);
+            gl.End();
+
+            // FRONT teksturu pridruzi prednjoj stranici kocke
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Front]);
+
+            // FRONT stranica
+            gl.Begin(OpenGL.GL_QUADS);
+            gl.TexCoord(1.0f, 0.0f);
+            gl.Vertex(x, y, z + length);
+            gl.TexCoord(1.0f, 1.0f);
+            gl.Vertex(x, y + height, z + length);
+            gl.TexCoord(0.0f, 1.0f);
+            gl.Vertex(x + width, y + height, z + length);
+            gl.TexCoord(0.0f, 0.0f);
+            gl.Vertex(x + width, y, z + length);
+            gl.End();
+
+            // BOTTOM teksturu pridruzi donjoj stranici kocke
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Bottom]);
+
+            // BOTTOM stranica
+            gl.Begin(OpenGL.GL_QUADS);
+            gl.TexCoord(1.0f, 0.0f); gl.Vertex(x, y, z);
+            gl.TexCoord(1.0f, 1.0f); gl.Vertex(x, y, z + length);
+            gl.TexCoord(0.0f, 1.0f); gl.Vertex(x + width, y, z + length);
+            gl.TexCoord(0.0f, 0.0f); gl.Vertex(x + width, y, z);
+            gl.End();
+
+            // TOP teksturu pridruzi gornjoj stranici
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Top]);
+
+            // TOP stranica
+            gl.Begin(OpenGL.GL_QUADS);
+            gl.TexCoord(0.0f, 1.0f); gl.Vertex(x + width, y + height, z);
+            gl.TexCoord(0.0f, 0.0f); gl.Vertex(x + width, y + height, z + length);
+            gl.TexCoord(1.0f, 0.0f); gl.Vertex(x, y + height, z + length);
+            gl.TexCoord(1.0f, 1.0f); gl.Vertex(x, y + height, z);
+            gl.End();
+
+            // LEFT teksturu pridruzi levoj stranici
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Left]);
+
+            // LEFT stranica
+            gl.Begin(OpenGL.GL_QUADS);
+            gl.TexCoord(1.0f, 1.0f); gl.Vertex(x, y + height, z);
+            gl.TexCoord(0.0f, 1.0f); gl.Vertex(x, y + height, z + length);
+            gl.TexCoord(0.0f, 0.0f); gl.Vertex(x, y, z + length);
+            gl.TexCoord(1.0f, 0.0f); gl.Vertex(x, y, z);
+            gl.End();
+
+            // RIGHT teksturu pridruzi desnoj stranici
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Right]);
+
+            // RIGHT stranica
+            gl.Begin(OpenGL.GL_QUADS);
+            gl.TexCoord(0.0f, 0.0f); gl.Vertex(x + width, y, z);
+            gl.TexCoord(1.0f, 0.0f); gl.Vertex(x + width, y, z + length);
+            gl.TexCoord(1.0f, 1.0f); gl.Vertex(x + width, y + height, z + length);
+            gl.TexCoord(0.0f, 1.0f); gl.Vertex(x + width, y + height, z);
+            gl.End();
         }
 
         private void DrawComputer(OpenGL gl)
@@ -399,6 +498,8 @@ namespace AssimpSample
             gl.PushMatrix();
             gl.Translate(0f, -320, 300f);
             gl.Scale(850f, 30f, 500f);
+            
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Wood]);
             gl.Color(0.6f, 0.3f, 0.2f);
             Cube cube = new Cube();
             cube.Render(gl, RenderMode.Render);
@@ -428,15 +529,25 @@ namespace AssimpSample
             gl.Rotate(0f, m_diskRotationY, 0f);
             gl.Scale(50f, 50f, 50f);
             gl.Rotate(90f, 0f, 0f);
+
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.CDBACK]);
+            gl.TexCoord(1.0f, 1.0f);
+            gl.TexCoord(0.0f, 0.0f);
+            gl.TexCoord(0.0f, 1.0f);
+            gl.TexCoord(1.0f, 0.0f);
             gl.Color(1f, 1f, 1f);
             Disk disk = new Disk();
+            disk.TextureCoords = true;
             disk.Loops = 120;
             disk.Slices = 50;
-            disk.InnerRadius = 0.3f;
+            disk.InnerRadius = 0.2f;
             disk.OuterRadius = 1.5f;
             disk.CreateInContext(gl);
             disk.Render(gl, RenderMode.Render);
+            
             gl.Rotate(180f, 0f, 0f);
+
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.CDFRONT]);
             disk.Render(gl, RenderMode.Render);
             gl.PopMatrix();
             m_diskRotationY += m_diskRotationSpeed;
@@ -446,16 +557,29 @@ namespace AssimpSample
         private void DrawSurface(OpenGL gl)
         {
             gl.PushMatrix();
-            gl.Rotate(90f, 0f, 0f);
-            gl.Translate(0f, 0f, 880f);
+            gl.Translate(0.0f, -878.0f, 0.0f);
+
+            gl.MatrixMode(OpenGL.GL_TEXTURE);
+            gl.PushMatrix();
+            var carpetScale = 6.0f;
+            gl.Scale(carpetScale, carpetScale, carpetScale);
+
+            gl.BindTexture(OpenGL.GL_TEXTURE_2D, m_textures[(int)TextureObjects.Carpet]);
             gl.Begin(OpenGL.GL_QUADS);
             gl.Normal(0.0f, 1.0f, 0.0f);
-            gl.Color(0.4f, 0f, 0f);
-            gl.Vertex(2000f, -2000f);
-            gl.Vertex(-2000f, -2000f);
-            gl.Vertex(-2000f, 2000f);
-            gl.Vertex(2000f, 2000f);
+            gl.Color(0.4f, 0.0f, 0.0f);
+            gl.TexCoord(1.0f, 1.0f);
+            gl.Vertex(2000.0f, 0.0f, -2000f);
+            gl.TexCoord(0.0f, 1.0f);
+            gl.Vertex(-2000.0f, 0.0f, -2000.0f);
+            gl.TexCoord(0.0f, 0.0f);
+            gl.Vertex(-2000.0f, 0.0f, 2000f);
+            gl.TexCoord(1.0f, 0.0f);
+            gl.Vertex(2000.0f, 0.0f, 2000f);
             gl.End();
+            gl.PopMatrix();
+            gl.MatrixMode(OpenGL.GL_MODELVIEW);
+
             gl.PopMatrix();
             gl.Flush();
         }
