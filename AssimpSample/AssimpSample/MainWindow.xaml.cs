@@ -135,6 +135,30 @@ namespace AssimpSample
                 case Key.Subtract:
                     if (!m_world.LockControls) m_world.SceneDistance += 700.0f;
                     break;
+                case Key.T:
+                    if (!m_world.LockControls && m_world.SpotlightRedAmbient - 0.1f >= 0f)
+                        m_world.SpotlightRedAmbient -= 0.1f;
+                    break;
+                case Key.R:
+                    if (!m_world.LockControls && m_world.SpotlightRedAmbient + 0.1f <= 1f)
+                        m_world.SpotlightRedAmbient += 0.1f;
+                    break;
+                case Key.H:
+                    if (!m_world.LockControls && m_world.SpotlightGreenAmbient - 0.1f >= 0f)
+                        m_world.SpotlightGreenAmbient -= 0.1f;
+                    break;
+                case Key.G:
+                    if (!m_world.LockControls && m_world.SpotlightGreenAmbient + 0.1f <= 1f)
+                        m_world.SpotlightGreenAmbient += 0.1f;
+                    break;
+                case Key.N:
+                    if (!m_world.LockControls && m_world.SpotlightBlueAmbient - 0.1f >= 0f)
+                        m_world.SpotlightBlueAmbient -= 0.1f;
+                    break;
+                case Key.B:
+                    if (!m_world.LockControls && m_world.SpotlightBlueAmbient + 0.1f <= 1f)
+                        m_world.SpotlightBlueAmbient += 0.1f;
+                    break;
                 case Key.C:
                     if (!m_world.LockControls) m_world.StartAnimation();
                     break;

@@ -117,6 +117,10 @@ namespace AssimpSample
 
         private float m_computerScalingFactor = 1.0f;
 
+        private float m_spotlightRedAmbient = 0.4f;
+        private float m_spotlightGreenAmbient = 0.0f;
+        private float m_spotlightBlueAmbient = 0.0f;
+
         #endregion Atributi
 
         #region Properties
@@ -202,6 +206,24 @@ namespace AssimpSample
         {
             get { return m_computerScalingFactor; }
             set { m_computerScalingFactor = value; }
+        }
+
+        public float SpotlightRedAmbient
+        {
+            get { return m_spotlightRedAmbient; }
+            set { m_spotlightRedAmbient = value; }
+        }
+
+        public float SpotlightGreenAmbient
+        {
+            get { return m_spotlightGreenAmbient; }
+            set { m_spotlightGreenAmbient = value; }
+        }
+
+        public float SpotlightBlueAmbient
+        {
+            get { return m_spotlightBlueAmbient; }
+            set { m_spotlightBlueAmbient = value; }
         }
 
         #endregion Properties
@@ -319,7 +341,7 @@ namespace AssimpSample
 
         private void RedSpotlightSetup(OpenGL gl)
         {
-            float[] light1ambient = { 0.4f, 0.0f, 0.0f, 1.0f };
+            float[] light1ambient = { m_spotlightRedAmbient, m_spotlightGreenAmbient, m_spotlightBlueAmbient, 1.0f };
             float[] light1diffuse = { 0.3f, 0.0f, 0.0f, 1.0f };
             float[] light1specular = { 0.8f, 0.0f, 0.0f, 1.0f };
             float[] light1direction = { 0.0f, -1.0f, 0.0f };
@@ -374,6 +396,7 @@ namespace AssimpSample
 
             float[] light1pos = { -350.0f, 1400.0f, 0.0f, 1.0f };
             gl.Light(OpenGL.GL_LIGHT1, OpenGL.GL_POSITION, light1pos);
+            RedSpotlightSetup(gl);
             DrawComputer(gl);
             DrawDisk(gl);
             gl.PopMatrix();
